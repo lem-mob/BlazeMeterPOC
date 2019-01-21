@@ -1,0 +1,291 @@
+{
+	"info": {
+		"_postman_id": "0e5b6d23-9d54-4e43-aa1e-04273c0b592e",
+		"name": "Test BlazeMeter Collection",
+		"description": "This will demonstrate postman test suite execution using BlazeMeter\n\nWe will persist all env variables\n1. Get the IP and a random uuid. from http bin\n2. Using the first integer, get the user id from jsonplaceholder\n3. Using the user's name and the uuid, create a cookie from httpbin\n4. Post to /anything and make assertions",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "GET IP Address from HTTPBIN",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "15ebf321-e66e-43e6-9fd3-11304823caa6",
+						"exec": [
+							"let testRunNumber = pm.environment.get(\"testRunNumber\");",
+							"console.log(\"===== TEST RUN #\"+ testRunNumber + \"==========\");",
+							"testRunNumber++;",
+							"pm.environment.set(\"testRunNumber\", testRunNumber);",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "3f3af03e-d618-4637-8f84-e1838767f8f1",
+						"exec": [
+							"const { origin } = pm.response.json();",
+							"pm.environment.set(\"ipAddress\", origin);",
+							"console.log(\"IP Address: \" + pm.environment.get(\"ipAddress\"));",
+							"",
+							"//Test",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{urlA}}/ip",
+					"host": [
+						"{{urlA}}"
+					],
+					"path": [
+						"ip"
+					]
+				},
+				"description": "This request returns an IP Addresss. "
+			},
+			"response": []
+		},
+		{
+			"name": "GET Random User",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "c5341cc5-5888-4a17-8bfe-8ff583a2651c",
+						"exec": [
+							"pm.environment.set(\"userID\", Math.floor(Math.random() * 10));",
+							"console.log(\"Set userID to \" + pm.environment.get(\"userID\"));"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "d8d8c65b-1b4f-4b16-b817-ee4ca695a31e",
+						"exec": [
+							"//Test",
+							"",
+							"//Make Cookie",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{urlB}}/users/{{userID}}",
+					"host": [
+						"{{urlB}}"
+					],
+					"path": [
+						"users",
+						"{{userID}}"
+					]
+				},
+				"description": "Sets the userID to a random number, then fetches the user info of that userID"
+			},
+			"response": []
+		},
+		{
+			"name": "Set Cookie",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "8f7845ed-912b-4322-b595-13f20bf7c63c",
+						"exec": [
+							"//Test",
+							"//assert cookie name and value are expected"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "CookieCrisp",
+						"value": "1234",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{urlA}}/cookies/set/{{cookieName}}/{{cookieValue}}",
+					"host": [
+						"{{urlA}}"
+					],
+					"path": [
+						"cookies",
+						"set",
+						"{{cookieName}}",
+						"{{cookieValue}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Return 500 Status",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "1daebe3f-1d37-4b1a-884e-24d49371a11c",
+						"exec": [
+							"//Test",
+							"//assert status code",
+							"",
+							"//save as final status"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{urlA}}/status/500",
+					"host": [
+						"{{urlA}}"
+					],
+					"path": [
+						"status",
+						"500"
+					]
+				},
+				"description": "Will return 500 every time"
+			},
+			"response": []
+		},
+		{
+			"name": "Return 500 Status Copy",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "1daebe3f-1d37-4b1a-884e-24d49371a11c",
+						"exec": [
+							"//Test",
+							"//assert status code",
+							"",
+							"//save as final status"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{urlA}}/status/200",
+					"host": [
+						"{{urlA}}"
+					],
+					"path": [
+						"status",
+						"200"
+					]
+				},
+				"description": "Will return 500 every time"
+			},
+			"response": []
+		},
+		{
+			"name": "Final Blaze Request",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Cookie",
+						"value": "",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"userID\": {{userID}},\n\t\"IP\": {{ipAddress}},\n\t\"Flow\":{{flowFollowed}},\n\t\"cookie\": {\n\t\t\"name\": {{cookieName}}\n\t}\n}"
+				},
+				"url": {
+					"raw": "{{urlA}}/anything/{{testRunNumber}}",
+					"host": [
+						"{{urlA}}"
+					],
+					"path": [
+						"anything",
+						"{{testRunNumber}}"
+					]
+				},
+				"description": "Should return whatever we pass in"
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "5db84e14-e095-4afb-bf57-debafb8daea7",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "7c7ebe51-43cb-47aa-a7c0-c581ea31ef8f",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
