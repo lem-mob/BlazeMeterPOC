@@ -16,9 +16,7 @@
 						"exec": [
 							"let testRunNumber = pm.environment.get(\"testRunNumber\");",
 							"console.log(\"===== TEST RUN #\"+ testRunNumber + \"==========\");",
-							"testRunNumber++;",
-							"pm.environment.set(\"testRunNumber\", testRunNumber);",
-							"",
+							"pm.environment.set(\"testRunNumber\", ++testRunNumber);",
 							""
 						],
 						"type": "text/javascript"
@@ -29,11 +27,21 @@
 					"script": {
 						"id": "3f3af03e-d618-4637-8f84-e1838767f8f1",
 						"exec": [
+							"//Test",
+							"pm.test(\"Body contains origin\", function () {",
+							"    pm.expect(pm.response.text()).to.include(\"origin\");",
+							"});",
+							"",
+							"",
+							"if(pm.response.code === 200){",
 							"const { origin } = pm.response.json();",
 							"pm.environment.set(\"ipAddress\", origin);",
 							"console.log(\"IP Address: \" + pm.environment.get(\"ipAddress\"));",
-							"",
-							"//Test",
+							"postman.setNextRequest('GET Random User');",
+							"} else{",
+							"    console.log(\"Failure. Stopping workflow\");",
+							"    postman.setNextRequest(null);",
+							"}",
 							"",
 							""
 						],
@@ -69,7 +77,7 @@
 					"script": {
 						"id": "c5341cc5-5888-4a17-8bfe-8ff583a2651c",
 						"exec": [
-							"pm.environment.set(\"userID\", Math.floor(Math.random() * 10));",
+							"pm.environment.set(\"userID\", Math.floor(Math.random() * 10)+1 );",
 							"console.log(\"Set userID to \" + pm.environment.get(\"userID\"));"
 						],
 						"type": "text/javascript"
@@ -81,9 +89,25 @@
 						"id": "d8d8c65b-1b4f-4b16-b817-ee4ca695a31e",
 						"exec": [
 							"//Test",
+							"const jsonData = pm.response.json();",
+							"pm.test(\"Returned ID is expected\", function () {",
+							"    pm.expect(jsonData.id).to.eql(pm.environment.get(\"userID\"));",
+							"});",
 							"",
 							"//Make Cookie",
-							""
+							"const { username } = jsonData;",
+							"pm.environment.set(\"cookieName\", username + \"_cookie\");",
+							"pm.environment.set(\"cookieValue\", 'ID-' + pm.environment.get(\"userID\") +  ",
+							"    '-IP-' + pm.environment.get(\"ipAddress\") );",
+							"",
+							"//Next in workflow",
+							"if(pm.response.code === 200){",
+							" postman.setNextRequest('Set Cookie');   ",
+							"",
+							"} else{",
+							"    console.log(\"Failure. Stopping workflow\");",
+							"    postman.setNextRequest(null);",
+							"}"
 						],
 						"type": "text/javascript"
 					}
@@ -119,7 +143,31 @@
 						"id": "8f7845ed-912b-4322-b595-13f20bf7c63c",
 						"exec": [
 							"//Test",
-							"//assert cookie name and value are expected"
+							"const cookieName = pm.environment.get(\"cookieName\");",
+							"const { cookies } = pm.response.json();",
+							"",
+							"pm.test(\"Cookie has been added\", function () {",
+							"    pm.expect(JSON.stringify(cookies)).to.include(cookieName);",
+							"});",
+							"pm.test(\"Value of cookie is as expected\", function () {",
+							"    pm.expect(cookies[cookieName]).to.eql(pm.environment.get(\"cookieValue\"));",
+							"});",
+							"",
+							"//Conditional workflow",
+							"//if username count is even return 200 else return 500",
+							"//for kicks let's use substring",
+							"const username = cookieName.substring(0,cookieName.length-7);",
+							"//add the test run number because apparently lots of the names have an even length",
+							"const testRunNumber = pm.environment.get(\"testRunNumber\");",
+							"const isOdd =username.length + testRunNumber %2;",
+							"console.log(isOdd);",
+							"const evensOrOdds = isOdd ? \"Odds!\" : \"Evens!\";",
+							"console.log(evensOrOdds);",
+							"pm.environment.set(\"flowFollowed\", evensOrOdds);",
+							"if(isOdd) postman.setNextRequest('Return 500 Status');",
+							"else postman.setNextRequest('Return 200 Status');",
+							"",
+							"    "
 						],
 						"type": "text/javascript"
 					}
@@ -163,9 +211,14 @@
 						"id": "1daebe3f-1d37-4b1a-884e-24d49371a11c",
 						"exec": [
 							"//Test",
-							"//assert status code",
 							"",
-							"//save as final status"
+							"pm.test(\"Status code is 500\", function () {",
+							"    pm.response.to.have.status(500);",
+							"});",
+							"let testedOdds = pm.environment.get(\"testedOdds\");",
+							"pm.environment.set(\"testedOdds\", ++testedOdds);",
+							"",
+							"postman.setNextRequest('Final Blaze Request');"
 						],
 						"type": "text/javascript"
 					}
@@ -193,7 +246,7 @@
 			"response": []
 		},
 		{
-			"name": "Return 500 Status Copy",
+			"name": "Return 200 Status",
 			"event": [
 				{
 					"listen": "test",
@@ -201,9 +254,13 @@
 						"id": "1daebe3f-1d37-4b1a-884e-24d49371a11c",
 						"exec": [
 							"//Test",
-							"//assert status code",
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
 							"",
-							"//save as final status"
+							"let testedEvens = pm.environment.get(\"testedEvens\");",
+							"pm.environment.set(\"testedEvens\", ++testedEvens);",
+							"postman.setNextRequest('Final Blaze Request');"
 						],
 						"type": "text/javascript"
 					}
@@ -232,6 +289,29 @@
 		},
 		{
 			"name": "Final Blaze Request",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "f7d8c852-19ed-409f-830d-d962e10fd1bb",
+						"exec": [
+							"const { headers } = pm.response.json();",
+							"pm.test(\"Final Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Body matches string\", function () {",
+							"    pm.expect(JSON.stringify(headers.Cookie)).to.include(pm.environment.get(\"cookieName\"));",
+							"});",
+							"",
+							"console.log(\"We've tested evens \" + pm.environment.get(\"testedEvens\") + \" times\");",
+							"console.log(\"We've tested odds \" + pm.environment.get(\"testedOdds\") + \" times\");",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
 				"method": "PUT",
 				"header": [
@@ -249,7 +329,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"userID\": {{userID}},\n\t\"IP\": {{ipAddress}},\n\t\"Flow\":{{flowFollowed}},\n\t\"cookie\": {\n\t\t\"name\": {{cookieName}}\n\t}\n}"
+					"raw": "{\"userID\": {{userID}},\"IP\": {{ipAddress}},\"Flow\":{{flowFollowed}},\"cookie\": {\"name\": {{cookieName}} }\n}"
 				},
 				"url": {
 					"raw": "{{urlA}}/anything/{{testRunNumber}}",
@@ -264,6 +344,53 @@
 				"description": "Should return whatever we pass in"
 			},
 			"response": []
+		},
+		{
+			"name": "Clean Up Cookie",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "c3ac3a07-a52e-498c-96d0-e7e2c6d6e809",
+						"exec": [
+							"const { cookies } = pm.response.json();",
+							"const cookieName = pm.environment.get(\"cookieName\");",
+							"pm.test(\"Cookie has been destroyed\", function () {",
+							"   ",
+							"    pm.expect(cookies[cookieName]).to.not.be.ok;",
+							"    // pm.expect(JSON.stringify(cookie)).to.not.include(pm.environment.get(\"cookieName\"));",
+							"",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{urlA}}/cookies/delete?{{cookieName}}",
+					"host": [
+						"{{urlA}}"
+					],
+					"path": [
+						"cookies",
+						"delete"
+					],
+					"query": [
+						{
+							"key": "{{cookieName}}",
+							"value": null
+						}
+					]
+				}
+			},
+			"response": []
 		}
 	],
 	"event": [
@@ -273,6 +400,7 @@
 				"id": "5db84e14-e095-4afb-bf57-debafb8daea7",
 				"type": "text/javascript",
 				"exec": [
+					"",
 					""
 				]
 			}
